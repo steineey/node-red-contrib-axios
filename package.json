@@ -5,7 +5,18 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": [
+    "node-red",
+    "http",
+    "request",
+    "axios"
+  ],
+  "homepage": "https://github.com/steineey/node-red-contrib-axios",
+  "bugs": "https://github.com/steineey/node-red-contrib-axios/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/steineey/node-red-contrib-axios"
+  },
   "author": "steineey (https://github.com/steineey)",
   "license": "MIT",
   "dependencies": {
