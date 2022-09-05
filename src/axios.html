@@ -1,0 +1,269 @@
+<script type="text/javascript">
+    RED.nodes.registerType("axios-endpoint", {
+        category: "config",
+        defaults: {
+            name: { value: "" },
+            baseURL: { value: "", required: true },
+            caCertPath: { value: "" },
+            verifyServerCert: { value: true },
+            proxyEnabled: { value: false },
+            proxyProtocol: { value: "https" },
+            proxyHost: { value: "" },
+            proxyPort: { value: "" },
+        },
+        credentials: {
+            username: { value: "", type: "text" },
+            password: { value: "", type: "password" },
+            proxyUsername: { value: "", type: "text" },
+            proxyPassword: { value: "", type: "password" },
+        },
+        label: function () {
+            return this.name || this.baseURL;
+        },
+        oneditprepare: function () {
+            
+            this.tabs = RED.tabs.create({
+                id: "tabs",
+                onchange: function (tab) {
+                    $("#tabs-content").children().hide();
+                    $("#" + tab.id).show();
+                },
+            });
+
+            this.tabs.addTab({
+                id: "tab-endpoint",
+                label: "Endpoint",
+            });
+
+            this.tabs.addTab({
+                id: "tab-tls",
+                label: "TLS",
+            });
+
+            this.tabs.addTab({
+                id: "tab-proxy",
+                label: "Proxy",
+            });
+
+            this.tabs.activateTab("tab-endpoint");
+        },
+    });
+</script>
+
+<script type="text/html" data-template-name="axios-endpoint">
+    <div class="form-row">
+        <label for="node-config-input-name"
+            ><i class="fa fa-tag"></i> Name</label
+        >
+        <input type="text" id="node-config-input-name" />
+    </div>
+
+    <div class="form-row tabs-row">
+        <ul style="min-width: 600px; margin-bottom: 20px;" id="tabs"></ul>
+    </div>
+
+    <div id="tabs-content">
+        <div id="tab-endpoint" style="display:none">
+            <div class="form-row">
+                <label for="node-config-input-baseURL"
+                    ><i class="fa fa-star"></i> Base URL</label
+                >
+                <input
+                    type="text"
+                    id="node-config-input-baseURL"
+                    placeholder="https://some-domain.com/api"
+                />
+            </div>
+            <div class="form-row">
+                <label for="node-config-input-username"
+                    ><i class="fa fa-user"></i> Username</label
+                >
+                <input type="text" id="node-config-input-username" />
+            </div>
+            <div class="form-row">
+                <label for="node-config-input-password"
+                    ><i class="fa fa-lock"></i> Password</label
+                >
+                <input type="password" id="node-config-input-password" />
+            </div>
+        </div>
+
+        <div id="tab-tls" style="display:none">
+            <div class="form-row">
+                <label for="node-config-input-caCertPath" style="width: auto;"
+                    ><i class="fa fa-user"></i> CA Certificate</label
+                >
+                <input
+                    type="text"
+                    id="node-config-input-caCertPath"
+                    placeholder="path to ca certificate (PEM)"
+                />
+            </div>
+            <div class="form-row">
+                <input
+                    type="checkbox"
+                    id="node-config-input-verifyServerCert"
+                    style="display: inline-block; width: auto; vertical-align: top;"
+                />
+                <label
+                    for="node-config-input-verifyServerCert"
+                    style="width: auto;"
+                    >Verify server certificate</label
+                >
+            </div>
+        </div>
+
+        <div id="tab-proxy" style="display:none">
+            <div class="form-row">
+                <input
+                    type="checkbox"
+                    id="node-config-input-proxyEnabled"
+                    style="display: inline-block; width: auto; vertical-align: top;"
+                />
+                <label for="node-config-input-proxyEnabled" style="width: auto;"
+                    >Proxy Enabled</label
+                >
+            </div>
+            <div class="form-row">
+                <label for="node-config-input-proxyHost">Hostname</label>
+                <input type="text" id="node-config-input-proxyHost" />
+            </div>
+            <div class="form-row">
+                <label for="node-config-input-proxyPort">Port</label>
+                <input type="number" id="node-config-input-proxyPort" />
+            </div>
+            <div class="form-row">
+                <label for="node-config-input-proxyUsername">Username</label>
+                <input type="text" id="node-config-input-proxyUsername" />
+            </div>
+            <div class="form-row">
+                <label for="node-config-input-proxyPassword">Password</label>
+                <input type="password" id="node-config-input-proxyPassword" />
+            </div>
+        </div>
+    </div>
+</script>
+
+<script type="text/markdown" data-help-name="axios-endpoint">
+http endpoint configuration for axios request
+
+### Endpoint
+
+: BaseURL (string) : `baseURL` will be prepended to request node `url`.
+: Username (string) : Optional - Username for http basic authentication.
+: Password (string) : Optional - Password for http basic authentication.
+
+### TLS
+
+: CA Certificate (path) : Add the path to your custom CA certificate.
+: Verify server certificate (bool) : TLS certificate verification.
+
+### Proxy
+
+Proxy hostname, port and optional authentication for proxy.
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType("axios-request", {
+        category: "network-input",
+        defaults: {
+            name: { value: "" },
+            endpoint: { type: "axios-endpoint", required: true },
+            method: { value: "get", required: true },
+            url: { value: "", required: true },
+            responseType: { value: "json" },
+            keepAlive: { value: false },
+            timeout: { value: 30000, required: true },
+        },
+        inputs: 1,
+        outputs: 1,
+        color: "#cbbbf7",
+        icon: "icons/node-red/white-globe.svg",
+        paletteLabel: "axios",
+        label: function () {
+            return `[${this.method}] ${this.name || this.url || "request"}`;
+        },
+    });
+</script>
+
+<script type="text/html" data-template-name="axios-request">
+    <div class="form-row">
+        <label for="node-input-endpoint"
+            ><i class="fa fa-server"></i> Endpoint</label
+        >
+        <input type="text" id="node-input-endpoint" />
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-method"
+            ><i class="fa fa-envelope-o"></i> Method</label
+        >
+        <select id="node-input-method">
+            <option value="get">GET</option>
+            <option value="post">POST</option>
+            <option value="put">PUT</option>
+            <option value="delete">DELETE</option>
+            <option value="patch">PATCH</option>
+        </select>
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-url"><i class="fa fa-terminal"></i> URL</label>
+        <input type="text" id="node-input-url" placeholder="/user" />
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-responseType"
+            ><i class="fa fa-sign-out"></i> Response</label
+        >
+        <select id="node-input-responseType">
+            <option value="json">JSON</option>
+            <option value="text">Text</option>
+            <option value="arraybuffer">Array Buffer</option>
+        </select>
+    </div>
+
+    <div class="form-row">
+        <input
+            type="checkbox"
+            id="node-input-keepAlive"
+            style="display: inline-block; width: auto; vertical-align: top;"
+        />
+        <label for="node-input-keepAlive" style="width: auto;"
+            >Connection keep-alive</label
+        >
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-timeout"
+            ><i class="fa fa-clock-o"></i> Timeout</label
+        >
+        <input type="number" id="node-input-timeout" />
+        <span>ms</span>
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" />
+    </div>
+</script>
+
+<script type="text/markdown" data-help-name="axios-request">
+http axios request node
+
+### Node Properties
+
+: Endpoint (axios-endpoint) : Define an endpoint configuration
+: Method (http-method) : Http method [GET, POST, PUT, DELETE]. 
+: URL (string) : `URL` will be added to `baseURL`. Overwrite with `msg.url`. 
+: Response (axios-responseType) : JSON, text or array buffer.
+: Connection keep-alive (boolean) : Keep tcp connection alive between requests for better performance in certain scenarios.
+: Timeout (integer) : Timeout for request in milliseconds.
+
+### Message Properties
+
+: msg.payload (any) : `msg.payload` is the data to be sent as the request body. Only applicable for request methods 'PUT', 'POST', 'DELETE , and 'PATCH'.
+: msg.headers (object) : `headers` are custom headers to be sent.
+: msg.params (object) : `params` are the URL parameters to be sent with the request.
+
+</script>
