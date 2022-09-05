@@ -16,3 +16,13 @@ Use this endpoint configuration in multiple request nodes.
 ### Request node
 
 ![axios-request](https://github.com/steineey/node-red-contrib-axios/blob/master/examples/axios-request.png)
+
+## Example flow
+
+Try out this cool [example flow](https://github.com/steineey/node-red-contrib-axios/blob/master/examples/axios-flow.json).
+
+![axios-flow](https://github.com/steineey/node-red-contrib-axios/blob/master/examples/axios-flow.png)
+
+## More documentation
+
+All node function are documented inside Node-RED.
