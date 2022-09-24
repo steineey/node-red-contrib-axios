@@ -30,15 +30,16 @@ module.exports = function (RED) {
 
         // http / https agent config
         var agentConfig = {
-            keepAlive: n.keepAlive
+            keepAlive: n.keepAlive,
+            rejectUnauthorized: endpoint.config.rejectUnauthorized
         };
 
         // read ca certificate file
-        if(endpoint.config.caCertPath) {
+        if (endpoint.config.caCertPath) {
             try {
                 agentConfig.ca = fs.readFileSync(endpoint.config.caCertPath);
-            }catch(err){
-                node.error(new Error('ca cert read error'));
+            } catch (err) {
+                node.error(new Error("ca cert read error"));
             }
         }
 
@@ -49,7 +50,7 @@ module.exports = function (RED) {
             timeout: n.timeout || 30000,
             responseType: n.responseType,
             httpsAgent: new https.Agent(agentConfig),
-            httpAgent: new http.Agent(agentConfig)
+            httpAgent: new http.Agent(agentConfig),
         };
 
         // request credentials
@@ -88,11 +89,15 @@ module.exports = function (RED) {
                 var config = {
                     ...baseConfig,
                     url: msg.url || n.url,
-                    headers: msg.headers,
-                    params: msg.params,
+                    headers: msg.headers
                 };
 
-                if (["put", "post", "delete", "patch"].includes(config.method)) {
+                if (config.method === "get") {
+                    // in case of get-method use payload for params
+                    config.params = msg.params || msg.payload;
+                } else {
+                    // in case of other mehthods
+                    config.params = msg.params;
                     config.data = msg.payload;
                 }
 

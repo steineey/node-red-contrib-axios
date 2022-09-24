@@ -5,7 +5,7 @@
             name: { value: "" },
             baseURL: { value: "", required: true },
             caCertPath: { value: "" },
-            verifyServerCert: { value: true },
+            rejectUnauthorized: { value: true },
             proxyEnabled: { value: false },
             proxyProtocol: { value: "https" },
             proxyHost: { value: "" },
@@ -102,11 +102,11 @@
             <div class="form-row">
                 <input
                     type="checkbox"
-                    id="node-config-input-verifyServerCert"
+                    id="node-config-input-rejectUnauthorized"
                     style="display: inline-block; width: auto; vertical-align: top;"
                 />
                 <label
-                    for="node-config-input-verifyServerCert"
+                    for="node-config-input-rejectUnauthorized"
                     style="width: auto;"
                     >Verify server certificate</label
                 >
