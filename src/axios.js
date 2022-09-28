@@ -16,6 +16,7 @@ module.exports = function (RED) {
         credentials: {
             username: { type: "text" },
             password: { type: "password" },
+            bearerToken: { type: "password" },
             proxyUsername: { type: "text" },
             proxyPassword: { type: "password" },
         },
@@ -51,14 +52,29 @@ module.exports = function (RED) {
             responseType: n.responseType,
             httpsAgent: new https.Agent(agentConfig),
             httpAgent: new http.Agent(agentConfig),
+            headers: {}
         };
 
-        // request credentials
+        // request authentication basic
         if (endpoint.credentials.username && endpoint.credentials.password) {
             baseConfig.auth = {
                 username: endpoint.credentials.username,
                 password: endpoint.credentials.password,
             };
+        }
+
+        // request authentication bearer token
+        if(endpoint.credentials.bearerToken) {
+            baseConfig.headers = { 
+                ...baseConfig.headers, 
+                'Authorization': `Bearer ${endpoint.credentials.bearerToken}` 
+            };
+        }
+
+        if (n.validateStatus === false) {
+            baseConfig.validateStatus = function(status) {
+                return true;
+            };          
         }
 
         // proxy config
@@ -83,13 +99,21 @@ module.exports = function (RED) {
         // count success and error
         var successCount = 0;
         var errorCount = 0;
+        node.status({
+            fill: "green",
+            shape: "dot",
+            text: `success ${successCount}, error ${errorCount}`,
+        });
 
         node.on("input", async function (msg, send, done) {
             try {
                 var config = {
                     ...baseConfig,
                     url: msg.url || n.url,
-                    headers: msg.headers
+                    headers: {
+                        ...baseConfig.headers,
+                        ...msg.headers
+                    }
                 };
 
                 if (config.method === "get") {
@@ -108,12 +132,14 @@ module.exports = function (RED) {
                     payload: response.data,
                     statusCode: response.status,
                 });
+
                 successCount++;
                 node.status({
                     fill: "green",
                     shape: "dot",
                     text: `success ${successCount}, error ${errorCount}`,
                 });
+
                 done();
             } catch (err) {
                 errorCount++;
