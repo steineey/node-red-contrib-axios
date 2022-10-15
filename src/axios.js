@@ -32,7 +32,7 @@ module.exports = function (RED) {
         // http / https agent config
         const agentConfig = {
             keepAlive: n.keepAlive,
-            rejectUnauthorized: endpoint.config.rejectUnauthorized
+            rejectUnauthorized: endpoint.config.rejectUnauthorized,
         };
 
         // read ca certificate file
@@ -52,7 +52,7 @@ module.exports = function (RED) {
             responseType: n.responseType,
             httpsAgent: new https.Agent(agentConfig),
             httpAgent: new http.Agent(agentConfig),
-            headers: {}
+            headers: {},
         };
 
         // request authentication basic
@@ -64,17 +64,17 @@ module.exports = function (RED) {
         }
 
         // request authentication bearer token
-        if(endpoint.credentials.bearerToken) {
-            baseConfig.headers = { 
-                ...baseConfig.headers, 
-                'Authorization': `Bearer ${endpoint.credentials.bearerToken}` 
+        if (endpoint.credentials.bearerToken) {
+            baseConfig.headers = {
+                ...baseConfig.headers,
+                Authorization: `Bearer ${endpoint.credentials.bearerToken}`,
             };
         }
 
         if (n.validateStatus === false) {
-            baseConfig.validateStatus = function(status) {
+            baseConfig.validateStatus = function (status) {
                 return true;
-            };          
+            };
         }
 
         // proxy config
@@ -112,8 +112,8 @@ module.exports = function (RED) {
                     url: msg.url || n.url,
                     headers: {
                         ...baseConfig.headers,
-                        ...msg.headers
-                    }
+                        ...msg.headers,
+                    },
                 };
 
                 if (config.method === "get") {
@@ -125,30 +125,42 @@ module.exports = function (RED) {
                     config.data = msg.payload;
                 }
 
-                const response = await axios.request(config);
+                axios
+                    .request(config)
+                    .then((response) => {
+                        send({
+                            ...msg,
+                            headers: response.headers,
+                            payload: response.data,
+                            statusCode: response.status,
+                        });
 
-                send({
-                    ...msg,
-                    headers: response.headers,
-                    payload: response.data,
-                    statusCode: response.status
-                });
+                        successCount++;
+                        node.status({
+                            fill: "green",
+                            shape: "dot",
+                            text: `success ${successCount}, error ${errorCount}`,
+                        });
 
-                successCount++;
-                node.status({
-                    fill: "green",
-                    shape: "dot",
-                    text: `success ${successCount}, error ${errorCount}`,
-                });
-
-                done();
+                        done();
+                    })
+                    .catch((err) => {
+                        if (err.response) {
+                            msg.payload = err.response.data;
+                            msg.headers = err.response.headers;
+                            msg.statusCode = err.response.status;
+                        }
+                        
+                        errorCount++;
+                        node.status({
+                            fill: "red",
+                            shape: "dot",
+                            text: `success ${successCount}, error ${errorCount}`,
+                        });
+                        
+                        done(err);
+                    });
             } catch (err) {
-                errorCount++;
-                node.status({
-                    fill: "red",
-                    shape: "dot",
-                    text: `success ${successCount}, error ${errorCount}`,
-                });
                 done(err);
             }
         });
