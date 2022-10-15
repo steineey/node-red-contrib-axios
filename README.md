@@ -17,9 +17,11 @@ Use this endpoint configuration in multiple request nodes.
 
 ![axios-request](https://raw.githubusercontent.com/steineey/node-red-contrib-axios/master/examples/axios-request.png)
 
-## Example flow
+## Example flows
 
-Try out this cool [example flow](https://github.com/steineey/node-red-contrib-axios/blob/master/examples/axios-flow.json).
+Try out this cool [basics flow](https://github.com/steineey/node-red-contrib-axios/blob/master/examples/basics.json).
+
+Or learn how to use multipart/form-data with this [flow](https://github.com/steineey/node-red-contrib-axios/blob/master/examples/form-data.json).
 
 ![axios-flow](https://raw.githubusercontent.com/steineey/node-red-contrib-axios/master/examples/axios-flow.png)
 

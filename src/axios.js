@@ -1,12 +1,12 @@
 module.exports = function (RED) {
-    var axios = require("axios");
-    var http = require("http");
-    var https = require("https");
-    var fs = require("fs");
+    const axios = require("axios");
+    const http = require("http");
+    const https = require("https");
+    const fs = require("fs");
 
     function EndpointNode(n) {
         RED.nodes.createNode(this, n);
-        var node = this;
+        const node = this;
         node.config = {
             ...n,
         };
@@ -24,13 +24,13 @@ module.exports = function (RED) {
 
     function RequestNode(n) {
         RED.nodes.createNode(this, n);
-        var node = this;
+        const node = this;
 
         // get request endpoint
-        var endpoint = RED.nodes.getNode(n.endpoint);
+        const endpoint = RED.nodes.getNode(n.endpoint);
 
         // http / https agent config
-        var agentConfig = {
+        const agentConfig = {
             keepAlive: n.keepAlive,
             rejectUnauthorized: endpoint.config.rejectUnauthorized
         };
@@ -45,7 +45,7 @@ module.exports = function (RED) {
         }
 
         // axios request base config
-        var baseConfig = {
+        const baseConfig = {
             method: n.method,
             baseURL: endpoint.config.baseURL,
             timeout: n.timeout || 30000,
@@ -97,8 +97,8 @@ module.exports = function (RED) {
         }
 
         // count success and error
-        var successCount = 0;
-        var errorCount = 0;
+        let successCount = 0;
+        let errorCount = 0;
         node.status({
             fill: "green",
             shape: "dot",
@@ -107,7 +107,7 @@ module.exports = function (RED) {
 
         node.on("input", async function (msg, send, done) {
             try {
-                var config = {
+                const config = {
                     ...baseConfig,
                     url: msg.url || n.url,
                     headers: {
@@ -125,12 +125,13 @@ module.exports = function (RED) {
                     config.data = msg.payload;
                 }
 
-                var response = await axios.request(config);
+                const response = await axios.request(config);
 
                 send({
                     ...msg,
+                    headers: response.headers,
                     payload: response.data,
-                    statusCode: response.status,
+                    statusCode: response.status
                 });
 
                 successCount++;
@@ -145,7 +146,7 @@ module.exports = function (RED) {
                 errorCount++;
                 node.status({
                     fill: "red",
-                    shape: "ring",
+                    shape: "dot",
                     text: `success ${successCount}, error ${errorCount}`,
                 });
                 done(err);
