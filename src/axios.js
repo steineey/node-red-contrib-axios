@@ -109,7 +109,7 @@ module.exports = function (RED) {
             try {
                 const config = {
                     ...baseConfig,
-                    url: msg.url || n.url,
+                    url: n.url || msg.url,
                     headers: {
                         ...baseConfig.headers,
                         ...msg.headers,
