@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-axios",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "A http request node for Node-RED",
   "scripts": {
     "test": "mocha test/axios_spec.js"
