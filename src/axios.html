@@ -53,6 +53,13 @@
     });
 </script>
 
+<style>
+    .node-input-params-container-row .red-ui-editableList-container,
+    .node-input-headers-container-row .red-ui-editableList-container {
+        height: auto !important;
+    }
+</style>
+
 <script type="text/html" data-template-name="axios-endpoint">
     <div class="form-row">
         <label for="node-config-input-name"
@@ -185,13 +192,95 @@ Proxy hostname, port and optional authentication for proxy.
             responseType: { value: "json" },
             keepAlive: { value: false },
             timeout: { value: 30000, required: true },
-            validateStatus: { value: true }
+            validateStatus: { value: true },
+            headers: { value: [] },
+            params: { value: [] }
         },
         inputs: 1,
         outputs: 1,
         color: "#cbbbf7",
         icon: "icons/node-red/white-globe.svg",
         paletteLabel: "axios",
+        oneditprepare: function() {
+            const node = this;
+            ['params', 'headers'].forEach(property => {
+                const plist = node[property] || [];
+                const list = $(`#node-input-${property}-container`)
+                .editableList({
+                    addItem: function (container, i, prop) {
+                        const row = $('<div/>').css({
+                            overflow: 'hidden',
+                            whiteSpace: 'nowrap',
+                            display: 'flex'
+                        }).appendTo(container);
+
+                        const propertyKeyCell = $('<div/>').css({ 'flex-grow': 1 }).appendTo(row);
+                        const propertyKeyValue = $('<input/>', { 
+                            class: `node-input-${property}-name`, 
+                            type: "text", 
+                            style: "width: 100%", 
+                            placeholder: "key" 
+                            })
+                            .appendTo(propertyKeyCell)
+                            .typedInput({ types: ["str", "msg", "flow", "global"] });
+                        propertyKeyValue.typedInput('type', prop.keyType);
+                        propertyKeyValue.typedInput('value', prop.keyValue);
+
+                        const propertyValueCell = $('<div/>').css({ 'flex-grow': 1, 'margin-left': '10px' }).appendTo(row);
+                        const propertyValue = $('<input/>', { 
+                            class: `node-input-${property}-value`, 
+                            type: "text", 
+                            style: "width: 100%", 
+                            placeholder: "value" 
+                            })
+                            .appendTo(propertyValueCell)
+                            .typedInput({ types: ["str", "msg", "flow", "global"] });
+                        propertyValue.typedInput('type', prop.valueType);
+                        propertyValue.typedInput('value', prop.valueValue);
+
+                    },
+                    sortable: true,
+                    removable: true
+                });
+                plist.forEach(prop => {
+                    list.editableList('addItem', prop);
+                });
+            });
+        },
+        oneditsave: function() {
+            ['params', 'headers'].forEach(property => {
+                const list = $(`#node-input-${property}-container`).editableList('items');
+                const node = this;
+                node[property] = [];
+                list.each(function(i) {
+                    const prop = $(this);
+                    const keyType = prop.find(`.node-input-${property}-name`).typedInput('type');
+                    const keyValue = prop.find(`.node-input-${property}-name`).typedInput('value');
+                    const valueType = prop.find(`.node-input-${property}-value`).typedInput('type');
+                    const valueValue = prop.find(`.node-input-${property}-value`).typedInput('value');
+                    node[property].push({
+                        keyType, keyValue, valueType, valueValue
+                    })
+                });
+            });
+        },
+        oneditresize: function(size) {
+            const dlg = $("#dialog-form");
+            ['params', 'headers'].forEach(property => {
+                const expandRow = dlg.find(`.node-input-${property}-container-row`);
+                let height = dlg.height() - 5;
+                if(expandRow && expandRow.length){
+                    const siblingRows = dlg.find(`> .form-row:not(.node-input-${property}-container-row)`);
+                    for (let i = 0; i < siblingRows.size(); i++) {
+                        const cr = $(siblingRows[i]);
+                        if(cr.is(":visible"))
+                            height -= cr.outerHeight(true);
+                    }
+                    $(`#node-input-${property}-container`).editableList('height',height);
+                } 
+            });
+            
+        },
         label: function () {
             return `[${this.method}] ${this.name || this.url || "request"}`;
         },
@@ -205,7 +294,6 @@ Proxy hostname, port and optional authentication for proxy.
         >
         <input type="text" id="node-input-endpoint" />
     </div>
-
     <div class="form-row">
         <label for="node-input-method"
             ><i class="fa fa-envelope-o"></i> Method</label
@@ -218,12 +306,22 @@ Proxy hostname, port and optional authentication for proxy.
             <option value="patch">PATCH</option>
         </select>
     </div>
-
     <div class="form-row">
         <label for="node-input-url"><i class="fa fa-terminal"></i> URL</label>
         <input type="text" id="node-input-url" placeholder="/resource" />
     </div>
-
+    <div class="form-row" style="margin-bottom:0;">
+        <label><i class="fa fa-list"></i> Params</label>
+    </div>
+    <div class="form-row node-input-params-container-row">
+        <ol id="node-input-params-container"></ol>
+    </div>
+    <div class="form-row" style="margin-bottom:0;">
+        <label><i class="fa fa-list"></i> Headers</label>
+    </div>
+    <div class="form-row node-input-headers-container-row">
+        <ol id="node-input-headers-container"></ol>
+    </div>
     <div class="form-row">
         <label for="node-input-responseType"
             ><i class="fa fa-sign-out"></i> Response</label
@@ -261,7 +359,6 @@ Proxy hostname, port and optional authentication for proxy.
             >Throw error if HTTP response status code other than 2xx</label
         >
     </div>
-
     <div class="form-row">
         <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
         <input type="text" id="node-input-name" />

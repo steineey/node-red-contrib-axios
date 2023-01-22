@@ -106,14 +106,35 @@ module.exports = function (RED) {
         });
 
         node.on("input", async function (msg, send, done) {
+
+            function getTypedInput(type, v) {
+                switch(type) {
+                    case 'str':
+                        return v;
+                    case 'msg':
+                        return msg[v];
+                    case 'flow':
+                        return node.context().flow.get(v);
+                    case 'global':
+                        return node.context().global.get(v);
+                }
+            }
+    
+            function getProperty(arr) {
+                const property = {};
+                if (!Array.isArray(arr)) return property;
+                arr.forEach((el)=>{
+                    property[getTypedInput(el.keyType, el.keyValue)] = getTypedInput(el.valueType, el.valueValue);
+                });
+                return property;
+            }
+
             try {
                 const config = {
                     ...baseConfig,
                     url: n.url || msg.url,
-                    headers: {
-                        ...baseConfig.headers,
-                        ...msg.headers,
-                    },
+                    params: null,
+                    headers: null
                 };
 
                 if (config.method === "get") {
@@ -124,6 +145,16 @@ module.exports = function (RED) {
                     config.params = msg.params;
                     config.data = msg.payload;
                 }
+
+                config.params = {
+                    ...config.params,
+                    ...getProperty(n.params)
+                };
+
+                config.headers = {
+                    ...msg.headers,
+                    ...getProperty(n.headers)
+                };
 
                 axios
                     .request(config)
