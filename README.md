@@ -3,7 +3,7 @@
 A http request node for Node-RED.
 Based on the [Axios](https://www.npmjs.com/package/axios) http client.
 
-[![npm version](https://img.shields.io/npm/v/axios.svg?style=flat-square)](https://www.npmjs.org/package/node-red-contirb-axios)
+[![npm version](https://img.shields.io/npm/v/axios.svg?style=flat-square)](https://www.npmjs.org/package/node-red-contrib-axios)
 [![install size](https://img.shields.io/badge/dynamic/json?url=https://packagephobia.com/v2/api.json?p=node-red-contrib-axios&query=$.install.pretty&label=install%20size&style=flat-square)](https://packagephobia.now.sh/result?p=node-red-contrib-axios)
 [![npm downloads](https://img.shields.io/npm/dm/node-red-contrib-axios.svg?style=flat-square)](https://npm-stat.com/charts.html?package=node-red-contrib-axios)
 [![Known Vulnerabilities](https://snyk.io/test/npm/axios/badge.svg)](https://snyk.io/test/npm/node-red-contrib-axios)
