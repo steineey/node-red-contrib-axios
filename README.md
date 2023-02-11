@@ -1,6 +1,6 @@
 # node-red-contrib-axios
 
-A http request node for Node-RED.
+An advanced http request node for Node-RED.
 Based on the [Axios](https://www.npmjs.com/package/axios) http client.
 
 [![npm version](https://img.shields.io/npm/v/node-red-contrib-axios.svg?style=flat-square)](https://www.npmjs.org/package/node-red-contrib-axios)
@@ -8,17 +8,20 @@ Based on the [Axios](https://www.npmjs.com/package/axios) http client.
 [![npm downloads](https://img.shields.io/npm/dm/node-red-contrib-axios.svg?style=flat-square)](https://npm-stat.com/charts.html?package=node-red-contrib-axios)
 [![Known Vulnerabilities](https://snyk.io/test/npm/node-red-contrib-axios/badge.svg)](https://snyk.io/test/npm/node-red-contrib-axios)
 
-## Advanvantages of this node
+## Nodes of this package
 
-This extension separates endpoint base configuration from endpoint execution.
-Define your api endpoint in a configuration node with a base URL, authentication, TLS and proxy.
-Use this endpoint configuration in multiple request nodes.
+This package provides two nodes.
 
-### Endpoint configuration node
+### Http endpoint configuration node
+
+Define your http endpoints base configuration (base URL, authentication, certificates, proxy) in a configuration node.
+This is a huge benefit, because you can reuse this configuration in multiple request nodes.
 
 ![axios-endpoint](https://raw.githubusercontent.com/steineey/node-red-contrib-axios/master/examples/axios-endpoint.png)
 
-### Request node
+### Http request node
+
+Use this node inside your flows to make http requests.
 
 ![axios-request](https://raw.githubusercontent.com/steineey/node-red-contrib-axios/master/examples/axios-request.png)
 
