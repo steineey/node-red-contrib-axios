@@ -66,7 +66,6 @@ module.exports = function (RED) {
         // request authentication bearer token
         if (endpoint.credentials.bearerToken) {
             baseConfig.headers = {
-                ...baseConfig.headers,
                 Authorization: `Bearer ${endpoint.credentials.bearerToken}`,
             };
         }
@@ -106,25 +105,25 @@ module.exports = function (RED) {
         });
 
         node.on("input", async function (msg, send, done) {
-
             function getTypedInput(type, v) {
-                switch(type) {
-                    case 'str':
+                switch (type) {
+                    case "str":
                         return v;
-                    case 'msg':
+                    case "msg":
                         return msg[v];
-                    case 'flow':
+                    case "flow":
                         return node.context().flow.get(v);
-                    case 'global':
+                    case "global":
                         return node.context().global.get(v);
                 }
             }
-    
+
             function getProperty(arr) {
                 const property = {};
                 if (!Array.isArray(arr)) return property;
-                arr.forEach((el)=>{
-                    property[getTypedInput(el.keyType, el.keyValue)] = getTypedInput(el.valueType, el.valueValue);
+                arr.forEach((el) => {
+                    property[getTypedInput(el.keyType, el.keyValue)] =
+                        getTypedInput(el.valueType, el.valueValue);
                 });
                 return property;
             }
@@ -134,7 +133,6 @@ module.exports = function (RED) {
                     ...baseConfig,
                     url: n.url || msg.url,
                     params: null,
-                    headers: null
                 };
 
                 if (config.method === "get") {
@@ -148,12 +146,13 @@ module.exports = function (RED) {
 
                 config.params = {
                     ...config.params,
-                    ...getProperty(n.params)
+                    ...getProperty(n.params),
                 };
 
                 config.headers = {
                     ...msg.headers,
-                    ...getProperty(n.headers)
+                    ...getProperty(n.headers),
+                    ...config.headers,
                 };
 
                 axios
@@ -181,14 +180,14 @@ module.exports = function (RED) {
                             msg.headers = err.response.headers;
                             msg.statusCode = err.response.status;
                         }
-                        
+
                         errorCount++;
                         node.status({
                             fill: "red",
                             shape: "dot",
                             text: `success ${successCount}, error ${errorCount}`,
                         });
-                        
+
                         done(err);
                     });
             } catch (err) {
