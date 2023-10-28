@@ -1,115 +1,308 @@
-const assert = require("assert");
+const should = require("should");
 const helper = require("node-red-node-test-helper");
 const axiosNode = require("../src/axios.js");
-const MockHttpServer = require("./MockHttpServer").MockHttpServer;
+
+const AXIOS_BASE_URL = process.env.AXIOS_BASE_URL || "https://httpbin.org";
 
 helper.init(require.resolve("node-red"));
 
-describe("axios Node", function () {
-    const PORT = 3000;
+const defaultTestFlow = [
+    {
+        id: "axios-endpoint-node",
+        type: "axios-endpoint",
+        baseURL: AXIOS_BASE_URL,
+    },
+    {
+        id: "axios-request-node",
+        type: "axios-request",
+        wires: [["helper-node"]],
+        endpoint: "axios-endpoint-node",
+        method: "get",
+        url: "/get",
+    },
+    { id: "helper-node", type: "helper" },
+];
 
-    const defaultTestFlow = [
-        {
-            id: "axios-endpoint-node",
-            type: "axios-endpoint",
-            baseURL: `http://localhost:${PORT}`,
-        },
-        {
-            id: "axios-request-node",
-            type: "axios-request",
-            wires: [["helper-node"]],
-            endpoint: "axios-endpoint-node",
-            method: "get",
-            url: "/",
-        },
-        { id: "helper-node", type: "helper" },
-    ];
-
-    const endpointCredentials = {
-        username: "nodered",
-        password: "nodered",
-    };
-
-    let mockHttpServer;
-
-    before(function (done) {
-        mockHttpServer = new MockHttpServer(PORT);
-        done();
-    });
-
-    after(function (done) {
-        mockHttpServer.close();
-        done();
-    });
-
+describe("axios node tests", function () {
     beforeEach(function (done) {
         helper.startServer(done);
     });
 
     afterEach(function (done) {
-        helper.unload().then(function () {
-            helper.stopServer(done);
+        helper.unload();
+        helper.stopServer(done);
+    });
+
+    it("simple get request", function (done) {
+        helper.load(axiosNode, defaultTestFlow, function () {
+            const helperNode = helper.getNode("helper-node");
+            const requestNode = helper.getNode("axios-request-node");
+            helperNode.on("input", (msg) => {
+                try {
+                    msg.should.have.property("statusCode", 200);
+                    done();
+                } catch (err) {
+                    done(err);
+                }
+            });
+            requestNode.receive({
+                payload: {},
+            });
         });
     });
 
-    it("get request with query param", function (done) {
+    it("request with query param", function (done) {
+        helper.load(axiosNode, defaultTestFlow, function () {
+            const helperNode = helper.getNode("helper-node");
+            const requestNode = helper.getNode("axios-request-node");
+            helperNode.on("input", (msg) => {
+                try {
+                    msg.should.have.property("statusCode", 200);
+                    msg.should.have
+                        .property("payload")
+                        .with.property("args")
+                        .with.property("foo", "bar");
+                    done();
+                } catch (err) {
+                    done(err);
+                }
+            });
+            requestNode.receive({
+                payload: {
+                    foo: "bar",
+                },
+            });
+        });
+    });
+
+    it("msg.url & msg.params & msg.headers", function (done) {
+        helper.load(axiosNode, [
+            {
+                id: "axios-endpoint-node",
+                type: "axios-endpoint",
+                baseURL: AXIOS_BASE_URL,
+            },
+            {
+                id: "axios-request-node",
+                type: "axios-request",
+                wires: [["helper-node"]],
+                endpoint: "axios-endpoint-node",
+                method: "get",
+                url: "",
+            },
+            { id: "helper-node", type: "helper" },
+        ], function () {
+            const helperNode = helper.getNode("helper-node");
+            const requestNode = helper.getNode("axios-request-node");
+            helperNode.on("input", (msg) => {
+                try {
+                    msg.should.have.property("statusCode", 200);
+                    msg.should.have
+                        .property("payload")
+                        .with.property("args")
+                        .with.property("foo", "bar");
+                    msg.should.have
+                        .property("payload")
+                        .with.property("headers")
+                        .with.property("Foo", "bar");
+                    done();
+                } catch (err) {
+                    done(err);
+                }
+            });
+            requestNode.receive({
+                url: "/get",
+                params: {
+                    foo: "bar",
+                },
+                headers: {
+                    foo: "bar"
+                }
+            });
+        });
+    });
+
+    it("custom header", function (done) {
+        helper.load(axiosNode, [
+            {
+                id: "axios-endpoint-node",
+                type: "axios-endpoint",
+                baseURL: AXIOS_BASE_URL,
+            },
+            {
+                id: "axios-request-node",
+                type: "axios-request",
+                wires: [["helper-node"]],
+                endpoint: "axios-endpoint-node",
+                method: "get",
+                url: "/get",
+                headers: [{
+                    keyType: "str",
+                    keyValue: "foo",
+                    valueType: "str",
+                    valueValue: "bar"
+                }]
+            },
+            { id: "helper-node", type: "helper" },
+        ], function () {
+            const helperNode = helper.getNode("helper-node");
+            const requestNode = helper.getNode("axios-request-node");
+            helperNode.on("input", (msg) => {
+                try {
+                    msg.should.have.property("statusCode", 200);
+                    msg.should.have
+                        .property("payload")
+                        .with.property("headers")
+                        .with.property("Foo", "bar");
+                    done();
+                } catch (err) {
+                    done(err);
+                }
+            });
+            requestNode.receive({
+                payload: {}
+            });
+        });
+    });
+
+    it("post request", function (done) {
         helper.load(
             axiosNode,
-            defaultTestFlow,
-            { "axios-endpoint-node": endpointCredentials },
+            [
+                {
+                    id: "axios-endpoint-node",
+                    type: "axios-endpoint",
+                    baseURL: AXIOS_BASE_URL,
+                },
+                {
+                    id: "axios-request-node",
+                    type: "axios-request",
+                    wires: [["helper-node"]],
+                    endpoint: "axios-endpoint-node",
+                    method: "post",
+                    url: "/post",
+                },
+                { id: "helper-node", type: "helper" },
+            ],
             function () {
                 const helperNode = helper.getNode("helper-node");
                 const requestNode = helper.getNode("axios-request-node");
-                const testId = "123";
                 helperNode.on("input", (msg) => {
                     try {
-                        assert.equal(
-                            msg.payload.query.id,
-                            testId,
-                            "query parameter id"
-                        );
+                        msg.should.have.property("statusCode", 200);
+                        msg.should.have
+                            .property("payload")
+                            .with.property("json")
+                            .with.property("foo", "bar");
                         done();
                     } catch (err) {
                         done(err);
                     }
                 });
-
                 requestNode.receive({
-                    payload: { id: testId },
+                    payload: {
+                        foo: "bar",
+                    },
                 });
             }
         );
     });
 
-    it("post request with json body", function (done) {
-        const testFlow = [...defaultTestFlow];
-        testFlow[1].method = "post"; // change to http post request
-
+    it("basic authentication", function (done) {
+        const credentials = {
+            username: "my-super-user",
+            password: "test-123",
+        };
         helper.load(
             axiosNode,
-            testFlow,
-            { "axios-endpoint-node": endpointCredentials },
+            [
+                {
+                    id: "axios-endpoint-node",
+                    type: "axios-endpoint",
+                    baseURL: AXIOS_BASE_URL,
+                },
+                {
+                    id: "axios-request-node",
+                    type: "axios-request",
+                    wires: [["helper-node"]],
+                    endpoint: "axios-endpoint-node",
+                    method: "get",
+                    url: `/basic-auth/${credentials.username}/${credentials.password}`,
+                },
+                { id: "helper-node", type: "helper" },
+            ],
+            {
+                "axios-endpoint-node": credentials,
+            },
             function () {
                 const helperNode = helper.getNode("helper-node");
                 const requestNode = helper.getNode("axios-request-node");
-                const testBody = { id: "2" };
-
                 helperNode.on("input", (msg) => {
                     try {
-                        assert.equal(msg.payload.method, "POST", "http method");
-                        assert.equal(
-                            msg.payload.body.id,
-                            testBody.id,
-                            "body id"
-                        );
+                        msg.should.have.property("statusCode", 200);
+                        msg.should.have
+                            .property("payload")
+                            .with.property("authenticated", true);
+                        msg.should.have
+                            .property("payload")
+                            .with.property("user", credentials.username);
                         done();
                     } catch (err) {
                         done(err);
                     }
                 });
-
                 requestNode.receive({
-                    payload: testBody,
+                    payload: {},
+                });
+            }
+        );
+    });
+
+    it("bearer authentication", function (done) {
+        const bearerToken = "test123";
+        helper.load(
+            axiosNode,
+            [
+                {
+                    id: "axios-endpoint-node",
+                    type: "axios-endpoint",
+                    baseURL: AXIOS_BASE_URL,
+                },
+                {
+                    id: "axios-request-node",
+                    type: "axios-request",
+                    wires: [["helper-node"]],
+                    endpoint: "axios-endpoint-node",
+                    method: "get",
+                    url: "/bearer",
+                    validateStatus: false,
+                },
+                { id: "helper-node", type: "helper" },
+            ],
+            {
+                "axios-endpoint-node": {
+                    bearerToken: bearerToken,
+                },
+            },
+            function () {
+                const helperNode = helper.getNode("helper-node");
+                const requestNode = helper.getNode("axios-request-node");
+                helperNode.on("input", (msg) => {
+                    try {
+                        msg.should.have.property("statusCode", 200);
+                        msg.should.have
+                            .property("payload")
+                            .with.property("authenticated", true);
+                        msg.should.have
+                            .property("payload")
+                            .with.property("token", bearerToken);
+                        done();
+                    } catch (err) {
+                        done(err);
+                    }
+                });
+                requestNode.receive({
+                    payload: {},
                 });
             }
         );
