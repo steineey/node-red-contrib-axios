@@ -1,9 +1,9 @@
 {
   "name": "node-red-contrib-axios",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "A http request node for Node-RED",
   "scripts": {
-    "test": "mocha test/axios_spec.js"
+    "test": "mocha test/axios_spec.js --timeout=3000"
   },
   "keywords": [
     "node-red",
@@ -20,7 +20,7 @@
   "author": "steineey (https://github.com/steineey)",
   "license": "MIT",
   "dependencies": {
-    "axios": "^1.6.0"
+    "axios": "^1.6.7"
   },
   "node-red": {
     "version": ">=2.0.0",
@@ -29,9 +29,9 @@
     }
   },
   "devDependencies": {
-    "mocha": "^10.2.0",
-    "node-red": "^3.1.0",
-    "node-red-node-test-helper": "^0.3.2",
+    "mocha": "^10.3.0",
+    "node-red": "^3.1.5",
+    "node-red-node-test-helper": "^0.3.3",
     "should": "^13.2.3"
   }
 }
