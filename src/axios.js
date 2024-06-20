@@ -131,7 +131,7 @@ module.exports = function (RED) {
             try {
                 const config = {
                     ...baseConfig,
-                    url: n.url || msg.url,
+                    url: msg.url || n.url,
                     params: null,
                 };
 
