@@ -95,16 +95,54 @@ module.exports = function (RED) {
             }
         }
 
-        // count success and error
-        let successCount = 0;
-        let errorCount = 0;
-        node.status({
-            fill: "green",
-            shape: "dot",
-            text: `success ${successCount}, error ${errorCount}`,
-        });
+        /* display node metric in node status */
+        const metric = {
+            execCtr: 0,
+            successCtr: 0,
+            errorCtr: 0,
+            runtime: 0,
+        };
+
+        function updateStatus({ fill }) {
+            node.status({
+                fill: fill,
+                shape: "dot",
+                text: `s=${metric.successCtr}, err=${metric.errorCtr}, rt=${metric.runtime}ms`,
+            });
+        }
+
+        // init
+        updateStatus({ fill: "green" });
+
+        function execStart() {
+            const execStartTs = Date.now();
+            metric.execCtr++;
+            updateStatus({ fill: "blue" });
+            return execStartTs;
+        }
+
+        function execSuccess(execStartTs) {
+            metric.execCtr--;
+            metric.successCtr++;
+            metric.runtime = Date.now() - execStartTs;
+            updateStatus({
+                fill: metric.execCtr > 0 ? "blue" : "green",
+            });
+        }
+
+        function execError(execStartTs) {
+            metric.execCtr--;
+            metric.errorCtr++;
+            metric.runtime = Date.now() - execStartTs;
+            updateStatus({
+                fill: "red",
+            });
+        }
 
         node.on("input", async function (msg, send, done) {
+
+            const execStartTs = execStart();
+
             function getTypedInput(type, v) {
                 switch (type) {
                     case "str":
@@ -128,13 +166,14 @@ module.exports = function (RED) {
                 return property;
             }
 
-            try {
-                const config = {
-                    ...baseConfig,
-                    url: msg.url || n.url,
-                    params: null,
-                };
+            const config = {
+                ...baseConfig,
+                url: msg.url || n.url,
+                params: null,
+            };
 
+            try {
+                
                 if (config.method === "get") {
                     // in case of get-method use payload for params
                     config.params = msg.params || msg.payload;
@@ -154,45 +193,35 @@ module.exports = function (RED) {
                     ...getProperty(n.headers),
                     ...config.headers,
                 };
-
-                axios
-                    .request(config)
-                    .then((response) => {
-                        send({
-                            ...msg,
-                            headers: response.headers,
-                            payload: response.data,
-                            statusCode: response.status,
-                        });
-
-                        successCount++;
-                        node.status({
-                            fill: "green",
-                            shape: "dot",
-                            text: `success ${successCount}, error ${errorCount}`,
-                        });
-
-                        done();
-                    })
-                    .catch((err) => {
-                        if (err.response) {
-                            msg.payload = err.response.data;
-                            msg.headers = err.response.headers;
-                            msg.statusCode = err.response.status;
-                        }
-
-                        errorCount++;
-                        node.status({
-                            fill: "red",
-                            shape: "dot",
-                            text: `success ${successCount}, error ${errorCount}`,
-                        });
-
-                        done(err);
-                    });
             } catch (err) {
+                execError(execStartTs);
                 done(err);
+                return;
             }
+
+            axios
+                .request(config)
+                .then((response) => {
+                    send({
+                        ...msg,
+                        headers: response.headers,
+                        payload: response.data,
+                        statusCode: response.status,
+                    });
+
+                    execSuccess(execStartTs);
+                    done();
+                })
+                .catch((err) => {
+                    if (err.response) {
+                        msg.payload = err.response.data;
+                        msg.headers = err.response.headers;
+                        msg.statusCode = err.response.status;
+                    }
+
+                    execError(execStartTs);
+                    done(err);
+                });
         });
     }
 
